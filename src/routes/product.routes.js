@@ -1,11 +1,12 @@
 import { Router } from "express";
 import Product from "../models/product.model.js";
 import productValidate from "../validations/product.validate.js";
-/*import { isAdmin } from "../middlewares/auth.middleware.js";*/
+/*import winston from "winston";*/
+import { isAdmin } from "../middlewares/auth.middleware.js";
 
 const productRouter = Router();
 
-productRouter.post("/products", async (req, res) => {
+productRouter.post("/products", isAdmin, async (req, res) => {
   try {
     await productValidate.validateAsync(req.body);
   } catch (error) {
@@ -19,18 +20,35 @@ productRouter.post("/products", async (req, res) => {
     return res.status(500).json("Unknown error occured!");
   }
 
-  winston.info("porduct created");
+  /* winston.info("porduct created");*/
   res.json({ message: "product has been created" });
 });
 
 productRouter.get("/products", async (req, res) => {
-  let products;
   try {
-    products = await Product.find({});
+    if (req.query.category) {
+      // if category is specified in the query, then get all products of that category
+      const products = await Product.find({
+        category: req.query.category,
+      });
+      return res.json(products);
+    } else if (req.query.search) {
+      // if search is specified in the query, then get all products that match the search
+      const products = await Product.find({
+        name: { $regex: req.query.search, $options: "i" },
+      });
+      return res.json(products);
+    } else {
+      // if no query is specified, then get all products
+      const products = await Product.find();
+      return res.json(products);
+    }
   } catch (error) {
-    res.status(500).json({ error: "Unknown error occured!" });
+    winston.error(error);
+    return res.status(500).json({
+      error: "fetching products failed!",
+    });
   }
-  res.json(products);
 });
 
 productRouter.get("/products/:id", async (req, res) => {
@@ -43,7 +61,7 @@ productRouter.get("/products/:id", async (req, res) => {
   res.json(product);
 });
 
-productRouter.put("/products/:id", async (req, res) => {
+productRouter.put("/products/:id", isAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -54,7 +72,7 @@ productRouter.put("/products/:id", async (req, res) => {
   res.json({ message: "Product updated" });
 });
 
-productRouter.delete("/products/:id", async (req, res) => {
+productRouter.delete("/products/:id", isAdmin, async (req, res) => {
   try {
     await Product.findByIdAndRemove(req.params.id);
   } catch (error) {

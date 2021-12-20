@@ -1,12 +1,12 @@
 import { Router } from "express";
 import User from "../models/user.model.js";
 import userValidate from "../validations/user.validate.js";
-/*import { isAdmin } from "../middlewares/auth.middleware.js";*/
+import { isAdmin } from "../middlewares/auth.middleware.js";
 
 const userRouter = Router();
 
 // create user
-userRouter.post("/users", async (req, res) => {
+userRouter.post("/users", isAdmin, async (req, res) => {
   // Validate request body
   try {
     await userValidate.validateAsync(req.body);
@@ -19,13 +19,13 @@ userRouter.post("/users", async (req, res) => {
 });
 
 // get all users
-userRouter.get("/users", async (req, res) => {
+userRouter.get("/users", isAdmin, async (req, res) => {
   const users = await User.find();
   res.json(users);
 });
 
 // get user by id
-userRouter.get("/users/:id", async (req, res) => {
+userRouter.get("/users/:id", isAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     res.json(user);
@@ -35,7 +35,7 @@ userRouter.get("/users/:id", async (req, res) => {
 });
 
 // update user by id
-userRouter.put("/users/:id", async (req, res) => {
+userRouter.put("/users/:id", isAdmin, async (req, res) => {
   // validate request body
   try {
     await userValidate.validateAsync(req.body);
@@ -52,7 +52,7 @@ userRouter.put("/users/:id", async (req, res) => {
 });
 
 // delete user by id
-userRouter.delete("/users/:id", async (req, res) => {
+userRouter.delete("/users/:id", isAdmin, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User Deleted" });

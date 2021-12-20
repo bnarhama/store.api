@@ -12,7 +12,7 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  delivary: String,
+  // delivary: String,
 });
 
 const Product = mongoose.model("Product", ProductSchema);
